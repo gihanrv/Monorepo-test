@@ -29,6 +29,7 @@ pipeline {
                                                 // sh "docker build -f build/Dockerfile ."
                                                 sh "pwd"
                                                 sh "ls -al"
+                                                sleep 30
                                             }
                                         }    
                                     }
