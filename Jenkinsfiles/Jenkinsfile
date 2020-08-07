@@ -31,7 +31,7 @@ pipeline {
                             matches1 = sh (
                                 script: "git diff --name-only HEAD~1 | sort -u | awk -F/ {'print \$2'} | uniq | grep -x '${list[i]}'", returnStatus: true
                             ) == 0
-                            echo "Matches1: $matches1 for Service: ${list[i]}"
+                            echo "Matches1: $matches1 for Service: ${list[i]}" >> Matches1.property
                         }
                      
                                      // condition for version 2 services
@@ -40,14 +40,14 @@ pipeline {
                             matches2 = sh (
                                 script: "git diff --name-only HEAD~1 | sort -u | awk -F/ {'print \$2,\$3'} | uniq | grep -x '${redir1} v2'", returnStatus: true
                             ) == 0
-                            echo "Matches2: $matches2 for Service: ${list[i]} "
+                            echo "Matches2: $matches2 for Service: ${list[i]} " >> Matches2.property
                         }
                         
                          else if ("${list[i]}"=="service4" || "${list[i]}"=="service9") {
                             matches3 = sh (
                                 script: "(git diff --name-only HEAD~1 | sort -u | awk -F/ {'print \$2,\$3'} | uniq | grep -x '${list[i]} api')", returnStatus: true
                             ) == 0
-                            echo "Matches3: $matches3 for Service: ${list[i]}"
+                            echo "Matches3: $matches3 for Service: ${list[i]}" >> Matches3.property
                         }
 
                         else if ("${list[i]}"=="service6listener") {
@@ -55,7 +55,7 @@ pipeline {
                             matches4 = sh (
                                 script: "git diff --name-only HEAD~1 | sort -u | awk -F/ {'print \$1,\$2'} | uniq | grep -x 'listeners ${redir2}'", returnStatus: true
                             ) == 0
-                            echo "Matches4: $matches4 for Listener: ${list[i]}"
+                            echo "Matches4: $matches4 for Listener: ${list[i]}" >> Matches4.property
                         }
 
 
@@ -63,14 +63,14 @@ pipeline {
                             matches5 = sh (
                                 script: "git diff --name-only HEAD~1 | sort -u | awk -F/ {'print \$1,\$2'} | uniq | grep -x 'services ${list[i]}'", returnStatus: true
                             ) == 0
-                            echo "Matches5: $matches5 for Service: ${list[i]}"
+                            echo "Matches5: $matches5 for Service: ${list[i]}" >> Matches5.property
                         }
 
                         else if ("${list[i]}"=="servive8") {
                             matches6 = sh (
                                 script: "git diff --name-only HEAD~1 | sort -u | awk -F/ {'print \$3'} | uniq | grep -x '${list[i]}'", returnStatus: true
                             ) == 0
-                            echo "Matches6: $matches6 for dotnet Service: ${list[i]}"
+                            echo "Matches6: $matches6 for dotnet Service: ${list[i]}" >> Matches6.property
                         }
 
 
@@ -78,7 +78,7 @@ pipeline {
                             matches7 = sh (
                                 script: "git diff --name-only HEAD~1 | sort -u | awk -F/ {'print \$2'} | uniq | grep -x '${list[i]}'", returnStatus: true
                             ) == 0
-                            echo "Matches7: $matches7 for Service: ${list[i]}"
+                            echo "Matches7: $matches7 for Service: ${list[i]}" >> Matches7.property
                         }
 
                     }
@@ -89,36 +89,45 @@ pipeline {
                      parallel { 
                      
                             stage ('check condition 1'){
-                                
                                 steps{
-                                if("$matches1"!="false"){
-                                stage(list[i] + ' build'){
-                                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE'){
-                                        script {
-                                            dir ("services/${list[i]}") {
-                                                sh "docker build -f build/Dockerfile ."
-                                            }
-                                        }    
-                                    }
-                                }
-                            }
+			                            sh '''	
+			                             set +e
+                                  grep -nr "true" ./matches1.txt
+                                  if [ $? -eq 0 ] ; then
+                                  grep -nr 'true' ./matches1.txt > m1run.txt
+                                  while IFS= read -r line ; do
+                                  DIR=$(echo $line | awk '{print $5}' )
+                                  echo "$DIR"
+                                  #docker build -f services/$DIR/build/Dockerfile .
+                                  ls -l services/$DIR/build/
+                                  done < m1run.txt
+                                  else
+                                  echo "not macth found"
+                                  fi
+                                   set -e     
+                                '''	                                  
                                 }
  
                                }
                                
                             stage ('check condition 2'){
                                 steps{
-                            if("$matches2"!="false"){
-                                stage(list[i] + ' build'){
-                                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE'){
-                                        script{
-                                            dir ("services/${redir1}/v2"){
-                                                sh "docker build -f build/Dockerfile ."
-                                            }    
-                                        }
-                                    }
-                                }
-                            }
+			                            sh '''	
+			                             set +e
+                                  grep -nr "true" ./matches2.txt
+                                  if [ $? -eq 0 ] ; then
+                                  grep -nr 'true' ./matches2.txt > m2run.txt
+                                  while IFS= read -r line ; do
+                                  DIR=$(echo $line | awk '{print $5}' )
+                                  echo "$DIR"
+                                  #docker build -f services/$DIR/build/Dockerfile .
+                                  ls -l services/$DIR/build/
+                                  done < m2run.txt
+                                  else
+                                  echo "not macth found"
+                                  fi
+                                   set -e     
+                                '''	  
 
                                 }
  
@@ -127,35 +136,44 @@ pipeline {
                             stage ('check condition 3'){
                                 
                                 steps{
-                        // condition for version 1 services (which contains v2)
-                            if("$matches3"!="false"){
-                                stage(list[i] + ' build'){
-                                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE'){
-                                        script {
-                                            dir ("services/${list[i]}") {
-                                                sh "docker build -f build/Dockerfile ."
-                                            }    
-                                        }
-                                    }
-                                }
-                            }  
+			                            sh '''	
+			                             set +e
+                                  grep -nr "true" ./matches3.txt
+                                  if [ $? -eq 0 ] ; then
+                                  grep -nr 'true' ./matches3.txt > m3run.txt
+                                  while IFS= read -r line ; do
+                                  DIR=$(echo $line | awk '{print $5}' )
+                                  echo "$DIR"
+                                  #docker build -f services/$DIR/build/Dockerfile .
+                                  ls -l services/$DIR/build/
+                                  done < m3run.txt
+                                  else
+                                  echo "not macth found"
+                                  fi
+                                   set -e     
+                                '''	  
                                 }
  
                             }
                             stage ('check condition 4'){
                                 
                                 steps{
-                        // condition for listeners
-                            if("$matches4"!="false"){
-                                stage(redir2 + ' listener' + ' build'){
-                                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE'){
-                                        script {
-                                            dir ("listeners/${redir2}") {
-                                                sh "docker build -f build/Dockerfile ."
-                                            }
-                                        }    
-                                    }
-                                }
+			                            sh '''	
+			                             set +e
+                                  grep -nr "true" ./matches4.txt
+                                  if [ $? -eq 0 ] ; then
+                                  grep -nr 'true' ./matches4.txt > m4run.txt
+                                  while IFS= read -r line ; do
+                                  DIR=$(echo $line | awk '{print $5}' )
+                                  echo "$DIR"
+                                  #docker build -f services/$DIR/build/Dockerfile .
+                                  ls -l services/$DIR/build/
+                                  done < m4run.txt
+                                  else
+                                  echo "not macth found"
+                                  fi
+                                   set -e     
+                                '''	  
                             }  
                                 }
  
@@ -163,74 +181,70 @@ pipeline {
                             stage ('check condition 5'){
                                 
                             steps{
-                             // condition for services                        
-                            if("$matches5"!="false"){
-                                stage(list[i] + ' build'){
-                                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE'){
-                                        script {
-                                            dir ("services/${list[i]}") {
-                                                sh "docker build -f build/Dockerfile ."
-                                            }    
-                                        }
-                                    }
-                                }
-                            } 
+			                            sh '''	
+			                             set +e
+                                  grep -nr "true" ./matches5.txt
+                                  if [ $? -eq 0 ] ; then
+                                  grep -nr 'true' ./matches5.txt > m5run.txt
+                                  while IFS= read -r line ; do
+                                  DIR=$(echo $line | awk '{print $5}' )
+                                  echo "$DIR"
+                                  #docker build -f services/$DIR/build/Dockerfile .
+                                  ls -l services/$DIR/build/
+                                  done < m5run.txt
+                                  else
+                                  echo "not macth found"
+                                  fi
+                                   set -e     
+                                '''	  
                                 }
                                 
                             }  
                             stage ('check condition 6'){
                                 
                                 steps{
-                        // condition for dotnet services        
-                            if("$matches6"!="false"){
-                                stage(list[i] + ' dotnet' + ' build'){
-                                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE'){
-                                        script {
-                                            dir ("dotnet/services/${list[i]}") {
-                                                sh "dotnet clean"
-                                                sh "dotnet build"
-                                            }
-                                        }
-                                        script {
-                                            dir ("dotnet/tests/CalculatedDepthSeriesTests") {
-                                            sh "dotnet test --no-restore"
-                                            }       
-                                        }
-                                        script{
-                                            dir ("dotnet") {
-                                                sh " docker build -f ./services/${list[i]}/build/Dockerfile ."
-                                            }
-                                        }   
-                                    }
-                                }
-                            } 
+                                  
+                                   sh '''	
+			                             set +e
+                                  grep -nr "true" ./matches6.txt
+                                  if [ $? -eq 0 ] ; then
+                                  grep -nr 'true' ./matches6.txt > m6run.txt
+                                  while IFS= read -r line ; do
+                                  DIR=$(echo $line | awk '{print $5}' )
+                                  echo "$DIR" 
+                                  cd dotnet/services/$DIR && dotnet clean && dotnet build && cd -
+                                  cd dotnet/tests/CalculatedDepthSeriesTests && dotnet test --no-restore && cd -
+                                  #docker build -f services/$DIR/build/Dockerfile .
+                                  ls -l services/$DIR/build/
+                                  done < m6run.txt
+                                  else
+                                  echo "not macth found"
+                                  fi
+                                   set -e     
+                                '''	  
+                                  
                                 }
  
                             } 
                             stage ('check condition 7'){
                                 
                                 steps{
-                        // condition for gometaserver
-                            if("$matches7"!="false"){
-                                stage(list[i] + ' build'){
-                                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE'){
-                                        script {
-                                            dir ("tools/${list[i]}") {
-                                            sh "docker build -f Dockerfile ."
-                                            }
-                                        }  
-                                    }
-                                }
-                            }  
-                                }
- 
-                            }  
-
-                            
-                     
-                         }
-                        
-                         }
+                                  	sh '''	
+			                             set +e
+                                  grep -nr "true" ./matches7.txt
+                                  if [ $? -eq 0 ] ; then
+                                  grep -nr 'true' ./matches7.txt > m7run.txt
+                                  while IFS= read -r line ; do
+                                  DIR=$(echo $line | awk '{print $5}' )
+                                  echo "$DIR"
+                                  #docker build -f services/$DIR/build/Dockerfile .
+                                  ls -l services/$DIR/build/
+                                  done < m7run.txt
+                                  else
+                                  echo "not macth found"
+                                  fi
+                                   set -e     
+                                '''	
                     
                         
                  
